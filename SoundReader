@@ -1,0 +1,34 @@
+import time
+import psutil
+from pycaw.pycaw import AudioUtilities
+
+class AudioSession:
+    def __init__(self, session):
+        self.session = session
+        self.process_id = session.ProcessId
+
+    def get_process_name(self):
+        try:
+            return psutil.Process(self.process_id).name()
+        except psutil.NoSuchProcess:
+            return "Unknown"
+
+def get_all_audio_sessions():
+    devices = AudioUtilities.GetAllSessions()
+    sessions = [AudioSession(session) for session in devices if session.Process]
+    return sessions
+
+def monitor_audio_sessions(interval=5):
+    while True:
+        sessions = get_all_audio_sessions()
+        if not sessions:
+            print("No audio sessions found.")
+        else:
+            print("All audio sessions:")
+            for session in sessions:
+                state = "Active" if session.session.State == 1 else "Inactive"
+                print(f"Process ID: {session.process_id}, Process Name: {session.get_process_name()}, State: {state}")
+        time.sleep(interval)
+
+if __name__ == "__main__":
+    monitor_audio_sessions()
